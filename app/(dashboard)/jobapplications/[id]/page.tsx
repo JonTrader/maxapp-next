@@ -73,7 +73,6 @@ export default async function ApplicationPage(props: { params: Promise<{ id: str
                         )}
                     <DeleteApplicationModal
                         applicationId={applicationId}
-                        status={application.status}
                     />
                     </div>
                 </div>
