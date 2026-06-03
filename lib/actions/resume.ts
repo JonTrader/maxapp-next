@@ -2,12 +2,15 @@
 
 import mongoose from 'mongoose'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/auth'
 import connectDB from '@/lib/db'
 import Resume from '@/lib/models/Resume'
 import { extractJson, extractPdfText } from '@/lib/utils'
 import { resumeAnalysis } from '@/lib/gemini'
 import { uploadResumePdfToCloudinary, deleteResumeFromCloudinary } from '@/lib/cloudinary'
+import { MAX_RESUME_FILE_SIZE_BYTES } from '@/lib/constants'
+import { ApiError } from '@google/genai'
 
 export type ActionResult = { ok: true } | { ok: false; message: string }
 
@@ -55,7 +58,7 @@ export async function deleteResume(
 
         return { ok: true }
     } catch (err) {
-        console.error(err)
+        console.error("Failed to delete resume:", err)
         return { ok: false, message: 'Server error' }
     }
 }
@@ -64,6 +67,8 @@ export async function createResume(
     prevState: CreateResumeState,
     formData: FormData,
 ): Promise<CreateResumeState> {
+    let resumeId = ''
+
     try {
         const session = await getSession()
         if (!session) return { ok: false, message: 'Unauthorized', resumeId: '' }
@@ -84,12 +89,23 @@ export async function createResume(
             return { ok: false, message: 'Only PDF files are accepted', resumeId: '' }
         }
 
+        if (resumeFile.size > MAX_RESUME_FILE_SIZE_BYTES) {
+            return {
+                ok: false,
+                message: `File is too large. Maximum size is ${MAX_RESUME_FILE_SIZE_BYTES / 1024 / 1024}MB.`,
+                resumeId: '',
+            }
+        }
+
         await connectDB()
 
         const bytes = await resumeFile.arrayBuffer()
         const buffer = Buffer.from(bytes)
         const resumeSnapshot = buffer.toString('base64')
         const resumeText = await extractPdfText(buffer)
+        if (!resumeText) {
+            return { ok: false, message: 'Could not read text from your PDF. The file may be corrupted or not a valid PDF.', resumeId: '' }
+        }
 
         const cloudinaryResult = await uploadResumePdfToCloudinary(buffer, resumeFile.name)
 
@@ -118,11 +134,21 @@ export async function createResume(
             fileSize: resumeFile.size,
         })
 
-        revalidatePath('/resumes')
+        resumeId = String(resume._id)
 
-        return { ok: true, message: '', resumeId: String(resume._id) }
+        revalidatePath('/resumes')
+        revalidatePath(`/resumes/${resumeId}`)
     } catch (err) {
-        console.error(err)
+        console.error('Failed to create resume:', err)
+        if (err instanceof ApiError && err.status === 503) {
+            return {
+                ok: false,
+                message: 'The AI model is under high demand. Please try again in a few minutes.',
+                resumeId: '',
+            }
+        }
         return { ok: false, message: 'Server error', resumeId: '' }
     }
+
+    redirect(`/resumes/${resumeId}`)
 }

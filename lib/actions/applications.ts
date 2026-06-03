@@ -52,7 +52,7 @@ export async function updateApplicationStatus(
 
         return { ok: true }
     } catch (err) {
-        console.error(err)
+        console.error("Failed to update application status:", err)
         return { ok: false, message: 'Server error' }
     }
 }
@@ -84,7 +84,7 @@ export async function deleteApplication(
 
         return { ok: true }
     } catch (err) {
-        console.error(err)
+        console.error("Failed to delete application:", err)
         return { ok: false, message: 'Server error' }
     }
 }
@@ -136,7 +136,10 @@ export async function createApplication(
         const buffer = Buffer.from(bytes)
         const resumeSnapshot = buffer.toString('base64')
         const resumeText = await extractPdfText(buffer)
-        
+        if (!resumeText) {
+            return { ok: false, message: 'Could not read text from your PDF. The file may be corrupted or not a valid PDF.', applicationId: '' }
+        }
+
         const application = await Application.create({
             userId: new mongoose.Types.ObjectId(String(session.user.id)),
             company,
@@ -156,7 +159,7 @@ export async function createApplication(
 
         return { ok: true, message: '', applicationId: String(application._id) }
     } catch (err) {
-        console.error(err)
+        console.error("Failed to create application:", err)
         return { ok: false, message: 'Server error', applicationId: '' }
     }
 }
@@ -220,7 +223,7 @@ export async function runApplicationAnalysis(applicationId: string): Promise<Act
 
         return { ok: true }
     } catch (err) {
-        console.error(err)
+        console.error("Failed to run application analysis:", err)
         return { ok: false, message: 'Server error' }
     }
 }

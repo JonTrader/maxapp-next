@@ -1,4 +1,4 @@
-import { PDFParse } from 'pdf-parse'
+import pdfParse from 'pdf-parse'
 
 export const formatDate = (value: string | number | Date | null | undefined) => {
   if (!value) return ''
@@ -11,16 +11,12 @@ export const formatDate = (value: string | number | Date | null | undefined) => 
 }
 
 export async function extractPdfText(buffer: Buffer): Promise<string> {
-  let parser: PDFParse | undefined
   try {
-    parser = new PDFParse({ data: buffer })
-    const result = await parser.getText()
+    const result = await pdfParse(buffer)
     return result.text
   } catch (error) {
     console.error('Error extracting PDF text:', error)
     return ''
-  } finally {
-    await parser?.destroy()
   }
 }
 

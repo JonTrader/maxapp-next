@@ -1,20 +1,20 @@
 "use client";
 
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useActionState, useMemo, useState } from 'react'
 import { ChevronLeft, Loader, Upload } from 'lucide-react'
-import { toast } from 'sonner'
 import Link from 'next/link'
-import { ROLE_SUGGESTIONS } from '@/lib/constants'
+import { MAX_RESUME_FILE_SIZE_BYTES, ROLE_SUGGESTIONS } from '@/lib/constants'
 import { createResume } from '@/lib/actions/resume'
+
+const createResumeInitialState = { ok: false, message: '', resumeId: '' }
 
 export default function CreateResumePage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState('')
   const [selectedRole, setSelectedRole] = useState('')
   const [customRole, setCustomRole] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter()
+
+  const [state, formAction, isPending] = useActionState(createResume, createResumeInitialState)
 
   const targetRole = useMemo(() => {
     const typedRole = customRole.trim()
@@ -35,37 +35,20 @@ export default function CreateResumePage() {
     if (file.type !== 'application/pdf') {
       setFileError('Only PDF files are allowed')
       setResumeFile(null)
+      event.target.value = ''
       return
     }
 
-    const maxSize = 5 * 1024 * 1024
-    if (file.size > maxSize) {
-      setFileError(`File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 5MB.`)
+    if (file.size > MAX_RESUME_FILE_SIZE_BYTES) {
+      setFileError(
+        `File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_RESUME_FILE_SIZE_BYTES / 1024 / 1024}MB.`,
+      )
       setResumeFile(null)
+      event.target.value = ''
       return
     }
 
     setResumeFile(file)
-  }
-
-  const handleSubmit = async (formData: FormData) => {
-    setIsSubmitting(true)
-    try {
-      const result = await createResume({ ok: false, message: '', resumeId: '' }, formData)
-
-      if (!result.ok) {
-        toast.error(result.message || 'Failed to analyze resume')
-        return
-      }
-
-      toast.success('Resume analyzed and saved')
-      router.push(`/resumes/${result.resumeId}`)
-    } catch (error) {
-      console.error(error)
-      toast.error('Something went wrong')
-    } finally {
-      setIsSubmitting(false)
-    }
   }
 
   return (
@@ -91,7 +74,7 @@ export default function CreateResumePage() {
 
         <section className="mt-6 rounded-xl border border-base-200 bg-base-100 p-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <form className="flex flex-col gap-6" action={handleSubmit}>
+            <form className="flex flex-col gap-6" action={formAction}>
               <label className="form-control w-full">
                 <div className="label">
                   <span className="label-text text-sm font-medium">Resume PDF</span>
@@ -166,14 +149,29 @@ export default function CreateResumePage() {
 
               <input type="hidden" name="targetRole" value={targetRole} />
 
+              {!state.ok && state.message && (
+                <div className="rounded-lg bg-error/10 p-3 text-sm text-error" role="alert">
+                  {state.message}
+                </div>
+              )}
+
               <button
                 type="submit"
                 className="btn btn-primary gap-2 w-full"
-                disabled={!canAnalyze || isSubmitting}
+                disabled={!canAnalyze || isPending}
                 title={!resumeFile ? 'Please select a resume PDF' : !targetRole ? 'Please select or enter a target role' : ''}
               >
-                {isSubmitting ? <Loader className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {isSubmitting ? 'Analyzing...' : 'Analyze Resume'}
+                {isPending ? (
+                  <>
+                    Analyzing
+                    <Loader className="h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    Analyze Resume
+                    <Upload className="h-4 w-4" />
+                  </>
+                )}
               </button>
 
               {(!resumeFile || !targetRole) && (

@@ -1,6 +1,8 @@
 // Pure constants/types — safe to import from client components.
 // Do NOT import anything from `mongoose` or `@/lib/db` here.
 
+export const MAX_RESUME_FILE_SIZE_BYTES = 5 * 1024 * 1024
+
 export const ROLE_SUGGESTIONS = [
   'Software Engineer',
   'Accountant',
