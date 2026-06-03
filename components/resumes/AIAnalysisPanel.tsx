@@ -116,7 +116,7 @@ export default function AIAnalysisPanel({ analysis }: { analysis: AIAnalysisProp
           <div className="flex flex-wrap gap-2">
             {(ats.present_keywords ?? []).length ? (
               ats.present_keywords!.map((keyword, idx) => (
-                <span key={`${keyword}-${idx}`} className="badge badge-outline badge-sm max-w-[200px] truncate">
+                <span key={`${keyword}-${idx}`} className="badge badge-outline badge-sm max-w-50 truncate">
                   {keyword}
                 </span>
               ))
@@ -128,7 +128,7 @@ export default function AIAnalysisPanel({ analysis }: { analysis: AIAnalysisProp
           <div className="flex flex-wrap gap-2">
             {(ats.missing_keywords ?? []).length ? (
               ats.missing_keywords!.map((keyword, idx) => (
-                <span key={`${keyword}-${idx}`} className="badge badge-outline badge-sm badge-warning text-warning max-w-[200px] truncate">
+                <span key={`${keyword}-${idx}`} className="badge badge-outline badge-sm badge-warning text-warning max-w-50 truncate">
                   {keyword}
                 </span>
               ))
