@@ -160,7 +160,7 @@ export default function AddApplicationModal() {
 
       {open && (
         <div className="modal modal-open">
-          <div className="modal-box relative max-w-2xl">
+          <div className="modal-box relative max-w-2xl max-h-[90vh] flex flex-col">
             <button
               type="button"
               className="btn btn-sm btn-ghost btn-circle absolute right-3 top-3"
@@ -168,9 +168,10 @@ export default function AddApplicationModal() {
             >
               ✕
             </button>
-            <h2 className="text-xl font-semibold">Add New Application</h2>
-            <form className="mt-4 space-y-4" action={handleSubmit}>
-              <div className="grid gap-4 md:grid-cols-2">
+            <h2 className="text-xl font-semibold mb-4">Add New Application</h2>
+            <div className="flex-1 overflow-y-auto">
+              <form className="space-y-4" action={handleSubmit}>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 <label className="input-group">
                   <span className="w-32">Company *</span>
                   <input
@@ -195,7 +196,7 @@ export default function AddApplicationModal() {
                 </label>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 <label className="input-group">
                   <span className="w-32">Status</span>
                   <select
@@ -249,8 +250,8 @@ export default function AddApplicationModal() {
                 </label>
               </div>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-2 grid-flow-col">
-                <label className="row-span-3 input-group">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_280px]">
+                <label className="input-group lg:row-span-2">
                   <span className="w-32">Job description *</span>
                   <textarea
                     name="jobDescription"
@@ -261,38 +262,40 @@ export default function AddApplicationModal() {
                     rows={4}
                   />
                 </label>
-                <label className="input-group">
-                  <span className="w-32">Job Application URL</span>
-                  <input
-                    name="jobUrl"
-                    value={form.jobUrl}
-                    onChange={handleChange('jobUrl')}
-                    type="text"
-                    placeholder="https://joburl.com/job"
-                    className="input input-bordered w-full"
-                  />
-                </label>
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text text-sm">Resume (PDF) *</span>
-                  </div>
-                  <input
-                    name="resume"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                    className="file-input file-input-bordered w-full"
-                  />
-                  <div className="label">
-                    {resumeError ? (
-                      <span className="label-text-alt text-xs text-error">{resumeError}</span>
-                    ) : form.resume ? (
-                      <span className="label-text-alt text-xs text-success">✓ {form.resume.name}</span>
-                    ) : (
-                      <span className="label-text-alt text-xs">Only PDF files are accepted</span>
-                    )}
-                  </div>
-                </label>
+                <div className="flex flex-col gap-4">
+                  <label className="input-group">
+                    <span className="w-32">Job Application URL</span>
+                    <input
+                      name="jobUrl"
+                      value={form.jobUrl}
+                      onChange={handleChange('jobUrl')}
+                      type="text"
+                      placeholder="https://joburl.com/job"
+                      className="input input-bordered w-full"
+                    />
+                  </label>
+                  <label className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text text-sm">Resume (PDF) *</span>
+                    </div>
+                    <input
+                      name="resume"
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileChange}
+                      className="file-input file-input-bordered w-full"
+                    />
+                    <div className="label">
+                      {resumeError ? (
+                        <span className="label-text-alt text-xs text-error">{resumeError}</span>
+                      ) : form.resume ? (
+                        <span className="label-text-alt text-xs text-success">✓ {form.resume.name}</span>
+                      ) : (
+                        <span className="label-text-alt text-xs">Only PDF files are accepted</span>
+                      )}
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <label className="flex items-center gap-2 text-sm">
@@ -305,32 +308,33 @@ export default function AddApplicationModal() {
                 Run AI analysis after saving
               </label>
 
-              <div className="mt-4 flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={handleCloseModal}
-                  disabled={isSaving || isAnalyzing}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={!canSubmit || isSaving || isAnalyzing}>
-                  {isSaving
-                    ? 'Saving…'
-                    : isAnalyzing
-                      ? (
-                        <>
-                          Analyzing
-                          <LoaderCircle className="h-4 w-4 animate-spin" />
-                        </>
-                      )
-                      : 'Add Application'}
-                </button>
-              </div>
-            </form>
-          </div>
+              <div className="mt-4 flex flex-col items-end gap-2 sm:flex-row sm:justify-end shrink-0 pt-2 border-t border-base-200 sticky bottom-0 bg-base-100 pb-2">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={handleCloseModal}
+                disabled={isSaving || isAnalyzing}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={!canSubmit || isSaving || isAnalyzing}>
+                {isSaving
+                  ? 'Saving…'
+                  : isAnalyzing
+                    ? (
+                      <>
+                        Analyzing
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                      </>
+                    )
+                    : 'Add Application'}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </div>
+    </div>
+  )}
     </>
   )
 }
