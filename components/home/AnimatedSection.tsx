@@ -6,14 +6,17 @@ interface AnimatedSectionProps {
   children: ReactNode;
   className?: string;
   delay?: number;
+  parallaxSpeed?: number;
 }
 
 export default function AnimatedSection({
   children,
   className = "",
   delay = 0,
+  parallaxSpeed = 0,
 }: AnimatedSectionProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,15 +37,37 @@ export default function AnimatedSection({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (parallaxSpeed === 0) return;
+
+    const handleScroll = () => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const elementCenter = rect.top + rect.height / 2;
+      const viewportCenter = windowHeight / 2;
+      const distance = elementCenter - viewportCenter;
+      setParallaxOffset(distance * parallaxSpeed * -0.1);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [parallaxSpeed]);
+
   return (
     <div
       ref={ref}
       className={`transition-all duration-700 ease-out ${className} ${
-        isVisible
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-8"
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{
+        transitionDelay: `${delay}ms`,
+        transform: parallaxSpeed !== 0 
+          ? `translateY(${parallaxOffset}px)` 
+          : undefined,
+      }}
     >
       {children}
     </div>

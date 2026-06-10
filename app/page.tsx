@@ -7,7 +7,7 @@ export default async function Home() {
   const session = await getSession();
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-200">
+    <div className="flex min-h-screen flex-col bg-base-100">
       <main className="flex-1">
         <Hero isAuthenticated={!!session?.user} />
         <Features />
