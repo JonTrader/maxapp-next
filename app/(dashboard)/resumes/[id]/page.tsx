@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import AIAnalysisPanel from '@/components/resumes/AIAnalysisPanel'
 import DeleteResumeModal from '@/components/resumes/DeleteResumeModal'
@@ -35,7 +34,7 @@ type Analysis = {
 
 export default async function ResumePage(props: { params: Promise<{ id: string }> }) {
   const session = await getSession()
-  if (!session) redirect('/login')
+  if (!session) return null
 
   const params = await props.params
   const { id: resumeId } = params

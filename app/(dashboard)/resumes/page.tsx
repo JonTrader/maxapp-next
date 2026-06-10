@@ -1,7 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { FileText, Plus } from 'lucide-react'
-
 import { getSession } from '@/lib/auth/auth'
 import { fetchResumes } from '@/lib/data'
 import PaginationControls from '@/components/ui/PaginationControls'
@@ -16,7 +14,7 @@ type PageProps = {
 
 export default async function ResumeListPage({ searchParams }: PageProps) {
   const session = await getSession()
-  if (!session) redirect('/login')
+  if (!session) return null
 
   const { page: pageParam } = await searchParams
   const parsedPage = parseInt(pageParam || '1', 10)

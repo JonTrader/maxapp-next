@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/auth'
 import { fetchApplicationsByStatus, type SerializedApplication } from '@/lib/data'
@@ -17,7 +16,7 @@ type PageProps = {
 
 export default async function StatusPage({ params, searchParams }: PageProps) {
   const session = await getSession()
-  if (!session) redirect('/login')
+  if (!session) return null
 
   const { status } = await params
   const { page: pageParam } = await searchParams

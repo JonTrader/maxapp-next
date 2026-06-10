@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/auth'
 import {
   fetchLatestApplicationsByStatus,
@@ -14,7 +13,7 @@ const ACTIVE_KEYS: StatusKey[] = ['applied', 'interview', 'offer']
 
 export default async function JobApplications() {
   const session = await getSession()
-  if (!session) redirect('/login')
+  if (!session) return null
 
   const [response, todayCount] = await Promise.all([
     fetchLatestApplicationsByStatus(session.user.id),

@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import { ChevronLeft, ExternalLink } from 'lucide-react'
 import AIAnalysisPanel from '@/components/applications/AIAnalysisPanel'
 import { getSession } from '@/lib/auth/auth'
@@ -10,12 +9,12 @@ import RunAnalysisButton from '@/components/applications/RunAnalysisButton'
 
 export default async function ApplicationPage(props: { params: Promise<{ id: string }> }) {
     const session = await getSession()
-    if (!session) redirect("/login")
+    if (!session) return null
 
     const params = await props.params
     const { id: applicationId } = params
 
-    const application = await getApplication(applicationId, session?.user.id)
+    const application = await getApplication(applicationId, session.user.id)
     if (!application) {
         return null
     }
