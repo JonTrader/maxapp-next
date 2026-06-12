@@ -11,10 +11,11 @@ export default function RegisterForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
+    const [redirecting, setRedirecting] = useState(false)
 
     const router = useRouter()
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault()
         setLoading(true)
         try {
@@ -25,16 +26,34 @@ export default function RegisterForm() {
             })
             if (response.error) {
                 toast.error(response.error.message ?? "Failed to register")
+                setLoading(false)
             } else {
                 toast.success('Account created!')
+                setRedirecting(true)
                 router.replace("/jobapplications")
             }
         } catch (err) {
             console.error(err)
             toast.error('Could not create account. Please try again.')
-        } finally {
             setLoading(false)
         }
+    }
+
+    if (redirecting) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-base-100">
+                <div className="text-center space-y-4">
+                    <div className="flex justify-center">
+                        <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p className="text-lg font-medium text-base-content">Account created!</p>
+                    <p className="text-sm text-base-content/70">Redirecting to your new account...</p>
+                    <span className="loading loading-spinner loading-md"></span>
+                </div>
+            </div>
+        )
     }
 
     return (

@@ -10,10 +10,11 @@ export default function LoginForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
+    const [redirecting, setRedirecting] = useState(false)
 
     const router = useRouter()
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault()
         setLoading(true)
         try {
@@ -23,16 +24,34 @@ export default function LoginForm() {
             })
             if (response.error) {
                 toast(response.error.message ?? "Failed to login")
+                setLoading(false)
             } else {
                 toast.success('Logged in successfully')
+                setRedirecting(true)
                 router.replace("/jobapplications")
             }
         } catch (err) {
             console.error(err)
             toast.error('Invalid credentials. Please check your email and password.')
-        } finally {
             setLoading(false)
         }
+    }
+
+    if (redirecting) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-base-100">
+                <div className="text-center space-y-4">
+                    <div className="flex justify-center">
+                        <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p className="text-lg font-medium text-base-content">Logged in successfully!</p>
+                    <p className="text-sm text-base-content/70">Redirecting to your applications…</p>
+                    <span className="loading loading-spinner loading-md"></span>
+                </div>
+            </div>
+        )
     }
 
     return (
