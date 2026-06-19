@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getSession } from '@/lib/auth/auth'
 import connectDB from '@/lib/db'
 import Application from '@/lib/models/Application'
+import Resume from '@/lib/models/Resume'
 import { STATUS_OPTIONS, type Status } from '@/lib/data'
 import { jobApplicationAnalysis } from '@/lib/gemini'
 import { extractJson, extractPdfText } from '@/lib/utils'
@@ -120,24 +121,70 @@ export async function createApplication(
         const jobUrlRaw = (formData.get('jobUrl') as string)?.trim() || ''
         const jobUrl = jobUrlRaw ? jobUrlRaw.replace(/^(https?:\/\/)/, '') : undefined
 
-        const resumeFile = formData.get('resume') as File | null
-        if (!resumeFile || resumeFile.size === 0) {
-            return { ok: false, message: 'Resume (PDF) is required', applicationId: '' }
-        }
+        const existingResumeId = (formData.get('existingResumeId') as string)?.trim()
+        let resumeSnapshot: string | undefined
+        let resumeFilename: string | undefined
+        let resumeText: string | undefined
 
-        const isPdf = resumeFile.type === 'application/pdf' || resumeFile.name.toLowerCase().endsWith('.pdf')
-        if (!isPdf) {
-            return { ok: false, message: 'Only PDF files are accepted', applicationId: '' }
-        }
+        if (existingResumeId) {
+            if (!mongoose.isValidObjectId(existingResumeId)) {
+                return { ok: false, message: 'Invalid resume id', applicationId: '' }
+            }
 
-        await connectDB()
+            await connectDB()
 
-        const bytes = await resumeFile.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-        const resumeSnapshot = buffer.toString('base64')
-        const resumeText = await extractPdfText(buffer)
-        if (!resumeText) {
-            return { ok: false, message: 'Could not read text from your PDF. The file may be corrupted or not a valid PDF.', applicationId: '' }
+            const resume = await Resume.findOne({
+                _id: new mongoose.Types.ObjectId(existingResumeId),
+                userId: new mongoose.Types.ObjectId(String(session.user.id)),
+            })
+
+            if (!resume) {
+                return { ok: false, message: 'Resume not found', applicationId: '' }
+            }
+
+            if (!resume.resumeText) {
+                return { ok: false, message: 'Selected resume has no readable text', applicationId: '' }
+            }
+
+            resumeText = resume.resumeText
+            resumeFilename = resume.originalFilename
+
+            if (resume.resumeSnapshot) {
+                resumeSnapshot = resume.resumeSnapshot
+            } else if (resume.cloudinaryUrl) {
+                try {
+                    const response = await fetch(resume.cloudinaryUrl)
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch resume PDF')
+                    }
+                    const buffer = Buffer.from(await response.arrayBuffer())
+                    resumeSnapshot = buffer.toString('base64')
+                } catch (err) {
+                    console.error('Failed to load selected resume PDF:', err)
+                    return { ok: false, message: 'Could not load selected resume PDF', applicationId: '' }
+                }
+            }
+        } else {
+            const resumeFile = formData.get('resume') as File | null
+            if (!resumeFile || resumeFile.size === 0) {
+                return { ok: false, message: 'Resume (PDF) is required', applicationId: '' }
+            }
+
+            const isPdf = resumeFile.type === 'application/pdf' || resumeFile.name.toLowerCase().endsWith('.pdf')
+            if (!isPdf) {
+                return { ok: false, message: 'Only PDF files are accepted', applicationId: '' }
+            }
+
+            await connectDB()
+
+            const bytes = await resumeFile.arrayBuffer()
+            const buffer = Buffer.from(bytes)
+            resumeSnapshot = buffer.toString('base64')
+            resumeText = await extractPdfText(buffer)
+            if (!resumeText) {
+                return { ok: false, message: 'Could not read text from your PDF. The file may be corrupted or not a valid PDF.', applicationId: '' }
+            }
+            resumeFilename = resumeFile.name
         }
 
         const application = await Application.create({
@@ -151,7 +198,7 @@ export async function createApplication(
             jobDescription,
             jobUrl,
             resumeSnapshot,
-            resumeFilename: resumeFile.name,
+            resumeFilename,
             resumeText,
         })
 
