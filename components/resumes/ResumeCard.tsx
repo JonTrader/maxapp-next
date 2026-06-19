@@ -20,12 +20,12 @@ export default function ResumeCard({ resume }: Props) {
       className="rounded-xl border border-base-200 bg-base-100 p-5 text-left transition hover:border-primary/40 hover:shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{resume.targetRole}</h2>
-          <p className="mt-1 text-sm text-base-content/70">{resume.originalFilename}</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="break-words text-lg font-semibold">{resume.targetRole}</h2>
+          <p className="mt-1 break-words text-sm text-base-content/70">{resume.originalFilename}</p>
         </div>
         {matchScore != null && (
-          <span className="badge badge-success badge-outline">{matchScore}% match</span>
+          <span className="badge badge-success badge-outline shrink-0 whitespace-nowrap">{matchScore}% match</span>
         )}
       </div>
 
