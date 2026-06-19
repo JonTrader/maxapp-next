@@ -20,6 +20,41 @@ export type CreateResumeState = {
     resumeId: string
 }
 
+export type ResumeSelectItem = {
+    _id: string
+    originalFilename: string
+    createdAt?: string
+}
+
+export async function getUserResumesForSelect(): Promise<{ ok: boolean; items: ResumeSelectItem[]; message?: string }> {
+    try {
+        const session = await getSession()
+        if (!session) {
+            return { ok: false, items: [], message: 'Unauthorized' }
+        }
+
+        await connectDB()
+
+        const docs = await Resume.find({
+            userId: new mongoose.Types.ObjectId(String(session.user.id)),
+        })
+            .sort({ createdAt: -1 })
+            .select('_id originalFilename createdAt')
+            .lean() as { _id: mongoose.Types.ObjectId; originalFilename: string; createdAt?: Date }[]
+
+        const items = docs.map((doc) => ({
+            _id: String(doc._id),
+            originalFilename: doc.originalFilename,
+            createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : undefined,
+        }))
+
+        return { ok: true, items }
+    } catch (err) {
+        console.error('Failed to fetch resumes for select:', err)
+        return { ok: false, items: [], message: 'Server error' }
+    }
+}
+
 export async function deleteResume(
     resumeId: string,
 ): Promise<ActionResult> {
